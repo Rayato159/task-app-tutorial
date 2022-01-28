@@ -1,16 +1,16 @@
 import { Column, CreateDateColumn, Entity, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
 
-@Entity({ name: 'tasks' })
-export class Task {
+@Entity()
+export class User {
 
     @PrimaryGeneratedColumn('uuid')
     id: string
 
-    @Column()
-    title: string
+    @Column({ unique: true })
+    username: string
 
     @Column()
-    description: string
+    password: string
 
     @CreateDateColumn()
     created: Date
