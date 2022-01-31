@@ -1,4 +1,5 @@
-import { Column, CreateDateColumn, Entity, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
+import { User } from "src/user/user.entity";
+import { Column, CreateDateColumn, Entity, ManyToOne, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
 
 @Entity({ name: 'tasks' })
 export class Task {
@@ -17,4 +18,7 @@ export class Task {
 
     @UpdateDateColumn()
     updated: Date
+
+    @ManyToOne(type => User, user => user.tasks)
+    user: User
 }

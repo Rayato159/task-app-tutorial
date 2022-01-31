@@ -1,6 +1,8 @@
 import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import { User } from 'src/user/user.entity';
 import { CreateTaskDto } from './dto/create-task.dto';
+import { SearchTasksDto } from './dto/search-tasks.dto';
 import { UpdateTaskDto } from './dto/update-task.dto';
 import { Task } from './task.entity';
 import { TaskRepository } from './task.repository';
@@ -12,7 +14,7 @@ export class TaskService {
         private taskRepository: TaskRepository
     ) {}
 
-    async createTask (createTaskDto: CreateTaskDto): Promise<Task> {
+    async createTask (createTaskDto: CreateTaskDto, user: User): Promise<Task> {
         const {
             title,
             description,
@@ -21,6 +23,7 @@ export class TaskService {
         const task = this.taskRepository.create({
             title,
             description,
+            user,
         })
 
         try {
@@ -33,9 +36,21 @@ export class TaskService {
         }
     }
 
-    async getTasks(): Promise<Task[]> {
+    async getTasks(user: User, searchTasksDto: SearchTasksDto): Promise<Task[]> {
         try {
-            const tasks = await this.taskRepository.find()
+            const {
+                search
+            } = searchTasksDto
+
+            const query = this.taskRepository.createQueryBuilder('task')
+            query.where({ user })
+
+            if(search) {
+                query.andWhere('(LOWER(task.title) LIKE LOWER(:search) OR LOWER(task.description) LIKE LOWER(:search))', 
+                { search: `%${search}%` })
+            }
+
+            const tasks = await query.getMany()
             return tasks
         } catch(e) {
             throw new NotFoundException({
@@ -44,9 +59,9 @@ export class TaskService {
         }
     }
 
-    async getTaskById(id: string): Promise<Task> {
+    async getTaskById(id: string, user: User): Promise<Task> {
         try {
-            const task = await this.taskRepository.findOne(id)
+            const task = await this.taskRepository.findOne({ where: { user, id } })
             return task
         } catch(e) {
             throw new NotFoundException({
@@ -55,9 +70,9 @@ export class TaskService {
         }
     }
 
-    async updateTask(id: string, updateTaskDto: UpdateTaskDto) {
+    async updateTask(id: string, updateTaskDto: UpdateTaskDto, user: User) {
         try {
-            const task = await this.getTaskById(id)
+            const task = await this.getTaskById(id, user)
 
             const {
                 title,
@@ -82,9 +97,9 @@ export class TaskService {
         }
     }
 
-    async deleteTask(id: string) {
+    async deleteTask(id: string, user: User) {
         try {
-            const task = await this.getTaskById(id)
+            const task = await this.getTaskById(id, user)
             await this.taskRepository.delete(id)
             return task
         } catch(e) {
