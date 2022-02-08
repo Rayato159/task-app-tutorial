@@ -20,5 +20,5 @@ export class User {
     updated: Date
 
     @OneToMany(type => Task, tasks => tasks.user)
-    tasks: Task
+    tasks: Task[]
 }
